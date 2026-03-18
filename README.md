@@ -8,7 +8,7 @@ Takes a naive `linalg.matmul` op and transforms it into a tiled loop nest with 3
 
 ## Why It Matters
 
-A naive matrix multiply iterates over entire rows and columns at once. For large matrices, this causes constant cache evictions — data gets loaded from RAM, used once, and thrown out. Loop tiling fixes this by breaking the matrix into small tiles (32x32) that fit entirely in L1 cache. The same arithmetic happens, but now data stays on-chip while it's being used.
+A naive matrix multiply iterates over entire rows and columns at once. For large matrices, this causes constant cache evictions; data gets loaded from RAM, used once, and thrown out. Loop tiling fixes this by breaking the matrix into small tiles (32x32) that fit entirely in L1 cache. The same arithmetic happens, but now data stays on-chip while it's being used.
 
 ## Lowering Pipeline
 ```
@@ -39,7 +39,7 @@ Benchmarked on 512x512 f32 matrices, 5 runs, best time recorded:
 |-------------|-------|-------|---------|
 | 512x512     | 352ms | 171ms | 2.06x   |
 
-Compiled with `-O2`. Speedup comes entirely from improved cache locality — no vectorization, no algorithmic changes.
+Compiled with `-O2`. Speedup comes entirely from improved cache locality. No vectorization, no algorithmic changes for now.
 
 ## Project Structure
 ```
@@ -90,11 +90,9 @@ mlir-translate --mlir-to-llvmir -o matmul.ll
 
 ## What I Learned
 
-Writing this pass taught me how MLIR's multi-level lowering works in practice — how a single high-level op like `linalg.matmul` decomposes through multiple dialect layers before reaching machine code. The tiling transformation itself is just loop strip-mining, but seeing it expressed as an IR rewrite made the mechanics concrete.
-
+Writing this pass helped me figure out how MLIR's multi-level lowering works in practice, how it helps in optimizing matrix multiplication, how a single high-level op like `linalg.matmul` decomposes through multiple dialect layers before reaching machine code and how this works wayy faster than the brute force approach of matrix multiplication.
 ## Future Work
 
-- Add vectorization pass (AVX2 SIMD) — expected 2-4x additional speedup
+- Add vectorization pass (AVX2 SIMD) probably 2-4x additional speedup
 - Tune tile sizes per cache size
-- Extend to non-square and non-power-of-2 matrices
 - CUDA lowering via GPU dialect
